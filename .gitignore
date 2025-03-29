@@ -1,2 +1,3 @@
 .env
 MindAIde/.env
+MindAIde/flask_session
