@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+
+    <script defer src="/static/js/register.js"></script>
+</head>
+<body>
+    <h2>Register</h2>
+    <form id="register-form">
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="role">Select Role:</label>
+        <select id="role" name="role" required>
+            <option value="">Select Role</option>
+            <option value="Patient">Patient</option>
+            <option value="Therapist">Therapist</option>
+            <option value="Caretaker">Caretaker</option>
+        </select>
+
+        <div id="dynamic-fields"></div> <!-- Dynamic fields based on role -->
+
+        <button type="submit">Register</button>
+    </form>
+</body>
+</html>

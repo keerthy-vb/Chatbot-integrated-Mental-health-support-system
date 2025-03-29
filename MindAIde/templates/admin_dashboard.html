@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding-top: 50px;
+        }
+        .dashboard-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        a {
+            text-decoration: none;
+            color: white;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #ff69b4, #87CEEB);
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        a:hover {
+            background: linear-gradient(45deg, #87CEEB, #ff69b4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Admin Dashboard</h2>
+
+        <div class="dashboard-card">
+            <h3>Manage Users</h3>
+            <p>View, edit, delete, or add new users.</p>
+            <a href="{{ url_for('manage_users') }}">Go to Users</a>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Manage Quiz</h3>
+            <p>Update or modify quiz questions.</p>
+            <a href="{{ url_for('manage_quiz') }}">Go to Quiz</a>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Manage Therapists</h3>
+            <p>Verify and add therapists.</p>
+            <a href="{{ url_for('manage_therapists') }}">Go to Therapists</a>
+        </div>
+    </div>
+</body>
+</html>

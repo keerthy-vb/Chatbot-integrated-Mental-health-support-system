@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Care Suggestions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script defer src="{{ url_for('static', filename='selfcare.js') }}"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Self-Care Suggestions</h2>
+        <div id="suggestions"></div>
+
+        
+        <div id="suggestions-container">
+            <!-- Suggestions will be dynamically inserted here -->
+        </div>
+
+        <h3>Saved Activities</h3>
+        <div id="saved-activities">
+            <!-- Saved activities will be shown here -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchSuggestions();
+            loadSavedActivities();
+        });
+
+        function fetchSuggestions() {
+            const category = localStorage.getItem("selectedCategory");
+            fetch(`/selfcare/get_suggestions?category=${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById("suggestions-container");
+                    container.innerHTML = "";
+
+                    data.forEach(item => {
+                        const div = document.createElement("div");
+                        div.classList.add("suggestion");
+                        div.innerHTML = `
+                            <h4>${item.name}</h4>
+                            <p>${item.description}</p>
+                            ${item.type === 'video' ? `<a href="${item.link}" target="_blank">Watch Video</a>` : ""}
+                            ${item.type === 'article' ? `<a href="${item.link}" target="_blank">Read Article</a>` : ""}
+                            <button onclick="saveActivity('${item.name}', '${item.type}')">Save Activity</button>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        function saveActivity(name, type) {
+            const reminderTime = prompt("Set reminder (YYYY-MM-DD HH:MM format):");
+            if (!reminderTime) return;
+
+            fetch('/selfcare/save_activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, type, reminderTime })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadSavedActivities();
+            });
+        }
+
+        function loadSavedActivities() {
+            fetch('/selfcare/get_saved_activities')
+                .then(response => response.json())
+                .then(data => {
+                    const savedContainer = document.getElementById("saved-activities");
+                    savedContainer.innerHTML = "";
+
+                    data.forEach(activity => {
+                        const div = document.createElement("div");
+                        div.classList.add("saved-activity");
+                        div.innerHTML = `
+                            <h4>${activity.name}</h4>
+                            <p>Reminder: ${activity.reminderTime}</p>
+                            <button onclick="updateStatus('${activity._id}', 'done')">Done</button>
+                            <button onclick="updateStatus('${activity._id}', 'missed')">Missed</button>
+                        `;
+                        savedContainer.appendChild(div);
+                    });
+                });
+        }
+
+        function updateStatus(id, status) {
+            fetch('/selfcare/update_activity_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+            })
+            .then(response => response.json())
+            .then(() => {
+                loadSavedActivities();
+            });
+        }
+    </script>
+</body>
+</html>

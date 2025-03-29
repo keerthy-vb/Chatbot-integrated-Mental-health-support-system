@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Background Image */
+        body {
+            background: url("{{ url_for('static', filename='img/login_img.png') }}") no-repeat center center/cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        /* Motivational Quote */
+        .quote-container {
+            background: rgba(255, 255, 255, 0.85); /* Less transparency for better readability */
+            padding: 20px 40px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.3);
+            color: #a12232; /* Rich deep red for contrast */
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light shadow for text clarity */
+            border: 2px solid rgba(255, 255, 255, 0.7); /* Soft white border to highlight */
+        }
+
+
+        /* Login Box */
+        .login-box {
+            background: rgba(98, 43, 52, 0.9); /* Matching dark maroon color */
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            width: 380px;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Heading */
+        h2 {
+            color: #ffb6b9;
+            font-weight: 600;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        /* Input Fields */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            transition: 0.3s ease-in-out;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.6);
+        }
+
+        /* Login Button */
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff758c, #ffb6b9);
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease-in-out;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #ffb6b9, #ff758c);
+            transform: scale(1.05);
+        }
+
+        /* Create Account */
+        .create-account {
+            color: white;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .create-account a {
+            color: #ffeb99;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .create-account a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="quote-container">
+        "Give yourself the care you deserve!"
+    </div>
+    <div class="login-box">
+        <h2>Welcome Back!</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        <form id="loginForm" action="/login" method="POST">
+            <input type="text" name="email" id="email" placeholder="Email" required>
+            
+            <div class="password-container">
+                <input type="password" name="password" id="password" placeholder="Password">
+                <i id="eyeIcon" class="fa fa-eye-slash" onclick="togglePassword()"></i>
+            </div>
+            
+            
+            
+                
+            
+            <button type="submit">Login</button>
+        </form>
+        <p class="create-account">Don't have an account? <a href="/register">Create one</a></p>
+    </div>
+    <script>
+        function togglePassword() {
+            var passwordField = document.getElementById("password");
+            var eyeIcon = document.getElementById("eyeIcon");
+    
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                eyeIcon.classList.remove("fa-eye-slash");
+                eyeIcon.classList.add("fa-eye");
+            } else {
+                passwordField.type = "password";
+                eyeIcon.classList.remove("fa-eye");
+                eyeIcon.classList.add("fa-eye-slash");
+            }
+        }
+    </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.getElementById("loginForm");
+    
+        if (loginForm) {
+            loginForm.addEventListener("submit", async function (event) {
+                event.preventDefault();
+    
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value.trim();
+    
+                if (!email || !password) {
+                    alert("Please enter both email and password.");
+                    return;
+                }
+    
+                try {
+                    const response = await fetch("/login", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
+    
+                    const result = await response.json();
+    
+                    if (response.ok) {
+                        window.location.href = result.redirect; // Redirects on success
+                    } else {
+                        alert(result.message); // Shows error message
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("An error occurred while logging in.");
+                } 
+            });
+        } else {
+            console.error("Login form not found!");
+        } 
+    });
+    </script>
+        
+</body>
+</html>

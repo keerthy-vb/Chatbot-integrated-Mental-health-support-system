@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>MindAide - Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to <span class="highlight">MindAide</span></h1>
+        <p>Your personal mental health assistant.</p>
+        <button onclick="location.href='/register'">Register</button>
+        <button onclick="location.href='/login'">Sign In</button>
+    </div>
+</body>
+</html>

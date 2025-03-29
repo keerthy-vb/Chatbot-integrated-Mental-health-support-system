@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Quiz</title>
+    <style>
+        /* Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f7d9e3, #d0e4f5); /* Light pink & light blue */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #622b34;
+            font-weight: 600;
+        }
+
+        .question {
+            text-align: left;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .form-check {
+            background: rgba(98, 43, 52, 0.08);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-check:hover {
+            background: rgba(98, 43, 52, 0.15);
+        }
+
+        .form-check-input {
+            margin-right: 10px;
+        }
+
+        .submit-btn {
+            background: #622b34;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            font-size: 18px;
+            width: 100%;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #843d48;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>Mental Health Quiz</h2>
+        <form action="{{ url_for('submit_quiz') }}" method="POST">
+
+
+
+            {% for question in questions %}
+                <div class="mb-3">
+                    <p class="question"><strong>{{ loop.index }}. {{ question['question_text'] }}</strong></p>
+                    {% for option in question['options'] %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" 
+                                   name="answers_{{ question['question_text'] }}" 
+                                   value="{{ question['category'] }}:{{ option['score'] }}" required>
+                            <label class="form-check-label">{{ option['text'] }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="submit-btn">Submit</button>
+        </form>
+    </div>
+    <script>
+        fetch("/check_session")
+            .then(response => response.json())
+            .then(data => console.log("User ID from session:", data.user_id));
+    </script>
+    
+    
+</body>
+</html>

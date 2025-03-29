@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Care</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <script src="{{ url_for('static', filename='js/selfcare.js') }}"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h2>Self-Care Suggestions</h2>
+        <label for="category">Select Category:</label>
+        <select id="category">
+            <option value="Anxiety">Anxiety</option>
+            <option value="Depression">Depression</option>
+            <option value="Stress">Stress</option>
+            <option value="Normal">Normal</option>
+        </select>
+        <button id="getSuggestionsBtn">Get Suggestions</button>
+        <div id="suggestions"></div>
+    </div>
+    <script src="{{ url_for('static', filename='js/selfcare.js') }}"></script>
+
+</body>
+</html>

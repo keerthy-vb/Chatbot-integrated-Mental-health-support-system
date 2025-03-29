@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Support</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: url("{{ url_for('static', filename='img/img3.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 500px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .btn-custom {
+            background: #6a89cc;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            border: none;
+            transition: 0.3s;
+        }
+        .btn-custom:hover {
+            background: #4a69bd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to MindAIde</h1>
+        <p>"Your mental health is a priority. Your happiness is essential. Your self-care is a necessity."</p>
+        <a href="{{ url_for('login') }}"><button class="btn-custom">Login</button></a>
+        <a href="{{ url_for('register') }}"><button class="btn-custom ms-3">Register</button></a>
+    </div>
+</body>
+</html>

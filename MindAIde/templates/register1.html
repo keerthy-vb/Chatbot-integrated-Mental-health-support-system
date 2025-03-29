@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #74b9ff, #a29bfe);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Form Container */
+        .form-container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* Input Fields */
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 5px rgba(108, 92, 231, 0.5);
+            outline: none;
+        }
+
+        /* Button Styling */
+        button {
+            background: #6c5ce7;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #4a69bd;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .form-container {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Create an Account</h2>
+
+        <form method="POST">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="number" name="age" placeholder="Age" required>
+
+            <select name="gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <input type="text" name="interest" placeholder="Your Interest" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <!-- Role Selection -->
+            <select name="role">
+                <option value="patient" selected>Patient</option>
+                <option value="therapist">Therapist</option>
+                <option value="admin">Admin</option>
+                <option value="caretaker">Caretaker</option>
+            </select>
+
+            <button type="submit">Create Account</button>
+        </form>
+    </div>
+
+</body>
+</html>

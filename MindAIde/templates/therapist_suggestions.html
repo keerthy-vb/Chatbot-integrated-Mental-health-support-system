@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Suggestions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+        }
+        .container {
+            width: 60%;
+            margin: auto;
+            padding: 20px;
+        }
+        .therapist-card {
+            background: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .appointment-btn {
+            background: #1E90FF;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .appointment-btn:hover {
+            background: #4682b4;
+        }
+    </style>
+</head>
+<body>
+    <h2>Therapist Suggestions</h2>
+    <div class="container">
+        {% for therapist in therapists %}
+        <div class="therapist-card">
+            <h3>{{ therapist['name'] }}</h3>
+            <p><strong>Specialization:</strong> {{ therapist['specialization'] }}</p>
+            <p><strong>Experience:</strong> {{ therapist['experience'] }} years</p>
+            <form action="{{ url_for('therapists.request_appointment') }}" method="POST">
+                <input type="hidden" name="therapist_id" value="{{ therapist['_id'] }}">
+                <input type="text" name="patient_name" placeholder="Enter your name" required>
+                <button class="appointment-btn" type="submit">Request Appointment</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

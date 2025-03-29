@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-image: url("{{ url_for('static', filename='img/paper-style-isolation-composition.jpg') }}");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section {
+            width: 80%;
+            margin: 20px auto;
+            padding: 40px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .section:hover {
+            transform: scale(1.05);
+        }
+        .quiz-section { background: rgba(255, 182, 193, 0.8); }
+        .chat-section { background: rgba(173, 216, 230, 0.8); }
+        .selfcare-section { background: rgba(255, 223, 186, 0.8); }
+        .logout-section { background: rgba(255, 160, 122, 0.8); }
+        
+        .quote {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .quiz-button { background: #ff69b4; }
+        .chat-button { background: #4682b4; }
+        .selfcare-button { background: #ff8c00; }
+        .logout-button { background: #dc143c; }
+        button:hover {
+            opacity: 0.8;
+        }
+        .therapist-section { 
+            background: rgba(186, 225, 255, 0.8); /* Light Blue Shade */
+        }
+        .therapist-button { 
+            background: #1E90FF; /* DodgerBlue */
+        }
+
+    </style>
+</head>
+<body>
+    <h2>Welcome!</h2>
+    
+    <div class="section quiz-section">
+        <div class="quote">“Let me Access You”</div>
+        <a href="{{ url_for('quiz_page') }}"><button class="quiz-button">Take Quiz</button></a>
+    </div>
+    
+    <div class="section chat-section">
+        <div class="quote">“Talking helps.”</div>
+        <a href="{{ url_for('chatbot.chatbot_page') }}"><button class="chat-button">Chat with AI</button></a>
+    </div>
+    
+    <div class="section selfcare-section">
+        <div class="quote">“Self-care is not selfish.”</div>
+        <a href="{{ url_for('selfcare.selfcare_home') }}"><button class="selfcare-button">Self-Care</button></a>
+    </div>
+
+    <div class="section therapist-section">
+        <div class="quote">“You are not alone.”</div>
+        <a href="{{ url_for('therapists.view_therapists') }}"><button class="therapist-button">Find a Therapist</button></a>
+    </div>
+    
+    
+    <div class="section logout-section">
+        <div class="quote">“Rest, recharge, restart.”</div>
+        <a href="{{ url_for('logout') }}"><button class="logout-button">Logout</button></a>
+    </div>
+</body>
+</html>

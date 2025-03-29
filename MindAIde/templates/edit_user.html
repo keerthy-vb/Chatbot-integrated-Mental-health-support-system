@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Form Container */
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #6a89cc;
+            box-shadow: 0 0 5px rgba(106, 137, 204, 0.5);
+        }
+
+        /* Button Styling */
+        button {
+            background: #27ae60;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #218c54;
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #6a89cc;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .back-link:hover {
+            color: #4a69bd;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Edit User</h2>
+    
+    <form method="POST">
+        <label>Name:</label>
+        <input type="text" name="name" value="{{ user['name'] }}" required>
+        
+        <label>Email:</label>
+        <input type="email" name="email" value="{{ user['email'] }}" required>
+        
+        <button type="submit">Update</button>
+    </form>
+
+    <a href="{{ url_for('manage_users') }}" class="back-link">Back to Users</a>
+
+</body>
+</html>

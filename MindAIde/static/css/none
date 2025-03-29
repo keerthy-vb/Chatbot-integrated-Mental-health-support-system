@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Keep existing background image */
+        body {
+            background: url("{{ url_for('static', filename='img/login_img.png') }}") no-repeat center center/cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Modern Purple Login Box */
+        .login-box {
+            background: rgba(70, 20, 130, 0.85); /* Rich Purple with transparency */
+            padding: 2.5rem;
+            border-radius: 15px;
+            text-align: center;
+            width: 380px;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .login-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Heading */
+        h2 {
+            color: #ffeb3b;
+            font-weight: 600;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        /* Quote */
+        .quote {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        /* Input Fields */
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            transition: 0.3s ease-in-out;
+            box-shadow: inset 0px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Login Button */
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff6b6b, #6b56de);
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #6b56de, #ff6b6b);
+            transform: scale(1.05);
+        }
+
+        /* Create Account */
+        .create-account {
+            color: white;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .create-account a {
+            color: #ffeb3b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .create-account a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Welcome Back!</h2>
+            <p class="quote">"Your mind is a powerful thing. When you fill it with positive thoughts, your life will start to change."</p>
+            <form id="loginForm" action="/login" method="POST">
+                <input type="text" name="email" id="email" placeholder="Email" required>
+                <input type="password" name="password" id="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p class="create-account">Don't have an account? <a href="/signup">Create one</a></p>
+            <p id="errorMessage" class="error"></p>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

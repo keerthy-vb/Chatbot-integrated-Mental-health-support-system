@@ -1,0 +1,8 @@
+streamlit==1.42.0
+langchain
+langchain_community
+openai
+transformers
+torch
+python-dotenv
+langchain-openai
