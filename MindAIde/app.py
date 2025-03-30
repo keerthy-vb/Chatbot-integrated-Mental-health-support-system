@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify,flash
 from pymongo import MongoClient
-from flask_pymongo import PyMongo
+#from flask_pymongo import PyMongo
 from flask_session import Session
 import hashlib
 import base64
@@ -18,13 +18,14 @@ from selfcare import selfcare_bp  # Importing self-care blueprint
 from appointments import appointments_bp
 from therapists import therapists_bp
 from flask_cors import CORS
-import bcrypt
+#import bcrypt
 import uuid
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False 
 CORS(app)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 app.config["SESSION_PERMANENT"] = False
@@ -37,7 +38,7 @@ db = client["mental_health_db"]
 users_collection = db["users"]
 quiz_collection = db["quiz_questions"]
 quiz_results_collection = db["quiz_results"]
-selfcare_collection = db["user_activities"] 
+selfcare_collection = db["selfcare_resources"] 
 therapist_collection = db["therapists"]
  # Added self-care collection
 
@@ -48,12 +49,6 @@ app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
 app.register_blueprint(selfcare_bp, url_prefix="/selfcare")
 app.register_blueprint(appointments_bp)
 app.register_blueprint(therapists_bp, url_prefix="/")
-
-
-
-
-
-
 
 
 
@@ -162,6 +157,7 @@ def login():
         if user and check_password_hash(user["password"], password):
             print("Login successful for:", user["name"])  # Debugging
             session["user"] = user 
+            session["_id"]=user["_id"]
             flash("Email and password are required!", "danger")  
             # return redirect(url_for("patient_dashboard"))
             return jsonify({"redirect": url_for("dashboard")}), 200  # JSON response for frontend
@@ -180,7 +176,7 @@ def dashboard():
 
     user = session["user"]  # Fetch user details from session
     user_role = user.get("role", "")  # Get user role safely
-
+    user_role = user_role.lower()
     # Redirect based on user role
     if user_role == "admin":
         return redirect(url_for("admin_dashboard"))
@@ -189,7 +185,8 @@ def dashboard():
     elif user_role == "caretaker":
         return redirect(url_for("caretaker_dashboard"))
     elif user_role == "patient":
-        return render_template("patient_dashboard", user=user)  # Render patient dashboard
+        return redirect(url_for("patient_dashboard"))
+        # return render_template("patient_dashboard")  # Render patient dashboard
 
     return redirect(url_for("login"))  # Redirect as fallback
 
@@ -396,12 +393,14 @@ def caretaker_dashboard():
 
 @app.route("/patient_dashboard")
 def patient_dashboard():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    
-    user = users_collection.find_one({"_id": ObjectId(session["user_id"])})
+    if "user" not in session or session["user"]["role"] != "Patient":
+        return redirect(url_for("login"))  # Redirect if not an admin
 
-    return render_template("dashboard.html", user=user["name"])
+    return render_template("dashboard.html")
+    
+    # user = users_collection.find_one({"_id": ObjectId(session["user_id"])})
+
+    # return render_template("dashboard.html", user=user["name"])
 
 
 @app.route("/logout")
@@ -429,41 +428,52 @@ def quiz_page():
 
 @app.route("/submit_quiz", methods=["POST"])
 def submit_quiz():
-    # ✅ Ensure user is logged in
-    if "user_id" not in session:
-        return redirect(url_for("login"))
+    print("📌 Received Request")  # Debugging
 
-    data = request.json  # ✅ Get JSON data (not form data)
-    if not data or "answers" not in data:
-        return jsonify({"error": "Invalid request data"}), 400
+    # Check if request Content-Type is application/json
+    if request.content_type != "application/json":
+        print("❌ Invalid Content-Type:", request.content_type)  # Debugging
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 400
 
-    # ✅ Initialize category scores
-    category_scores = {"Anxiety": 0, "Depression": 0, "Stress": 0, "Normal": 0}
+    try:
+        # Get JSON data
+        data = request.get_json()
+        print("📌 Received Data:", data)  # Debugging
 
-    questions = list(db.quiz_questions.find())  # ✅ Fetch all questions
+        if not data:
+            print("❌ No JSON data received")  # Debugging
+            return jsonify({"error": "Invalid request data"}), 400
 
-    if len(data["answers"]) != len(questions):
-        return jsonify({"error": "Please answer all questions!"}), 400
+        user_id = data.get("_id")
+        email = data.get("email")
+        name = data.get("name")
+        answers = data.get("answers")
 
-    # ✅ Process answers
-    for i, question in enumerate(questions):
-        try:
-            category, score = question["options"][data["answers"][i]].split(":")
-            category_scores[category] += int(score.strip())
-        except (ValueError, IndexError, KeyError):
-            return jsonify({"error": f"Invalid answer format for question {i + 1}"}), 400
+        if not user_id or not answers:
+            return jsonify({"error": "Missing required fields"}), 400
 
-    # ✅ Determine result category
-    result_category = max(category_scores, key=category_scores.get)
+        print(f"✅ User: {name} ({email}), Answers: {answers}")  # Debugging
 
-    # ✅ Store result in database
-    quiz_results_collection.insert_one({
-        "user_id": ObjectId(session["user_id"]),  
-        "name": session["user"],
-        "quiz_result": result_category
-    })
+        # Placeholder logic for calculating quiz result
+        result_category = "Anxiety"  # Change this to actual logic
 
-    return render_template("quiz_result.html", result=result_category)
+        return jsonify({"category": result_category})
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+
+@app.route("/quiz_result")
+def quiz_result():
+    if "quiz_result" not in session:
+        return redirect(url_for("patient_dashboard"))  # Prevent direct access
+
+    return render_template("quiz_result.html", result=session["quiz_result"])
+
+
+
 
 @app.route("/check_session")
 def check_session():
@@ -493,6 +503,35 @@ def selfcare_page():
     user_activities = selfcare_collection.find_one({"user_id": ObjectId(session.get("user_id"))})
     
     return render_template("selfcare.html", user_data=user_activities)
+
+@app.route('/suggestions/', methods=['GET'])
+def suggestions():
+    category = request.args.get('category')  # Get category from URL
+    if not category:
+        return "Category not provided", 400  # Handle missing category
+
+    data = selfcare_collection.find_one({"category": category})
+    
+    if data:
+        return render_template('suggestions.html', resources=data["resources"], category=category)
+    else:
+        return render_template('suggestions.html', resources={}, category=category)  # No data found case
+    
+@app.route("/get_resources")
+def get_resources():
+    category = request.args.get("category")
+    
+    if not category:
+        return jsonify({"error": "Category not provided"}), 400
+
+    resource_data = selfcare_collection.find_one({"category": category}, {"_id": 0})
+
+    if not resource_data:
+        return jsonify({"error": "No resources found for this category"}), 404
+
+    return jsonify(resource_data)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -4,14 +4,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Self-Care</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
-    <script src="{{ url_for('static', filename='js/selfcare.js') }}"></script>
+    
 
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #ffdde1, #ee9ca7);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        .dashboard-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ff7eb3;
+            color: white;
+            padding: 10px 15px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+
+        .dashboard-btn:hover {
+            background: #ff5181;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 26px;
+        }
+
+        .quote {
+            font-style: italic;
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            margin: 10px 0;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid #ee9ca7;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 15px;
+            font-size: 18px;
+            background: #ee9ca7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff7eb3;
+        }
+
+        #suggestions {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
+
+    <a href="{{ url_for('dashboard') }}" class="dashboard-btn">🏠 Go to Dashboard</a>
+
     <div class="container">
         <h2>Self-Care Suggestions</h2>
+        
+        <p class="quote">"Self-care is not a luxury, it’s a necessity. Take care of yourself first, so you can take care of others."</p>
+
         <label for="category">Select Category:</label>
         <select id="category">
             <option value="Anxiety">Anxiety</option>
@@ -19,10 +116,26 @@
             <option value="Stress">Stress</option>
             <option value="Normal">Normal</option>
         </select>
-        <button id="getSuggestionsBtn">Get Suggestions</button>
+
+        <button id="getSuggestionsBtn" onclick="window.location.href='/suggestions/'">Get Suggestions</button>
+
+
+
         <div id="suggestions"></div>
     </div>
-    <script src="{{ url_for('static', filename='js/selfcare.js') }}"></script>
+
+    
+    <script>
+        document.getElementById("getSuggestionsBtn").addEventListener("click", function () {
+            const selectedCategory = document.getElementById("category").value;
+    
+            if (selectedCategory) {
+                window.location.href = `/suggestions/?category=${selectedCategory}`;  // Redirect correctly
+            } else {
+                alert("Please select a category!");
+            }
+        });
+    </script>
 
 </body>
 </html>

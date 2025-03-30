@@ -93,7 +93,7 @@
                     {% endfor %}
                 </div>
             {% endfor %}
-            <button type="submit" class="submit-btn">Submit</button>
+            <button id="submitBtn" type="submit" class="submit-btn">Submit</button>
         </form>
     </div>
     <script>
@@ -101,6 +101,7 @@
             .then(response => response.json())
             .then(data => console.log("User ID from session:", data.user_id));
     </script>
+    <script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
     
     
 </body>
