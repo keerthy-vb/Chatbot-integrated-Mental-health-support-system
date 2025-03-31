@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -169,7 +167,12 @@
     
     <div class="content" id="notifications" style="display: none;">
         <h2>Notifications</h2>
-        <ul id="notificationsList"></ul>
+        
+        <h3>Pending Notifications</h3>
+        <ul id="pendingNotifications"></ul>
+        
+        <h3>Completed Notifications</h3>
+        <ul id="completedNotifications"></ul>
     </div>
     
 
@@ -214,59 +217,87 @@
             button.parentElement.remove();
         }
         function setReminder(item, button) {
-            // ✅ Remove any existing popup
-            let existingPopup = document.querySelector(".reminder-popup");
+            // Remove any existing popups before creating a new one
+            const existingPopup = document.querySelector(".reminder-popup");
             if (existingPopup) existingPopup.remove();
 
-            // ✅ Create a popup for selecting date & time
+            // Create a popup for selecting date & time
             const reminderPopup = document.createElement("div");
             reminderPopup.classList.add("reminder-popup");
             reminderPopup.innerHTML = `
                 <label>Select Reminder Time:</label>
                 <input type="datetime-local" id="reminderTime">
                 <button onclick="saveReminder('${item}', this)">✔ Set</button>
-                <button onclick="this.parentNode.remove()">❌ Cancel</button>
+                <button onclick="closeReminderPopup(this)">❌ Cancel</button>
             `;
+
+            // Append the popup next to the button
             button.parentNode.appendChild(reminderPopup);
         }
 
-
         // Function to save the reminder
         function saveReminder(item, button) {
-            let datetimeInput = button.previousElementSibling; // Get the input field
-            let datetime = datetimeInput.value;
-
-            if (!datetime) {
-                alert("Please select a valid date and time!");
+            const reminderTime = button.previousElementSibling.value; // Get selected time
+            if (!reminderTime) {
+                alert("Please select a time!");
                 return;
             }
 
-            fetch('/add_notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: item, time: datetime })
+            // Send reminder to backend
+            fetch("/add_reminder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: item, time: reminderTime })
             })
             .then(response => response.json())
             .then(data => {
-                console.log(data.message);
+                if (data.success) {
+                    // Add the reminder to the notifications section
+                    const notificationList = document.getElementById("notificationsList");
+                    const li = document.createElement("li");
+                    li.classList.add("notification-item");
+                    li.innerHTML = `
+                        <span>${item} - Reminder set for ${reminderTime}</span>
+                        <button class="delete-btn" onclick="deleteNotification(this)">❌ Delete</button>
+                    `;
+                    notificationList.appendChild(li);
 
-                // ✅ Show "Reminder Set" message near the button
-                let reminderMsg = document.createElement("span");
-                reminderMsg.innerText = "Reminder Set!";
-                reminderMsg.style.color = "green";
-                reminderMsg.style.marginLeft = "10px";
-                button.parentNode.appendChild(reminderMsg);
+                    // Show success message
+                    const msg = document.createElement("span");
+                    msg.textContent = "✔ Reminder Set!";
+                    msg.style.color = "green";
+                    msg.style.marginLeft = "10px";
+                    msg.style.fontWeight = "bold";
+                    button.parentNode.after(msg);
 
-                // ✅ Remove message after 1 second
-                setTimeout(() => reminderMsg.remove(), 1000);
+                    // Remove message after 1 second
+                    setTimeout(() => {
+                        msg.remove();
+                    }, 1000);
 
-                // ✅ Close the reminder popup after setting the reminder
-                button.parentNode.remove();
+                    // Close the popup
+                    button.parentNode.remove();
+                } else {
+                    alert("Failed to set reminder. Try again.");
+                }
             })
-            .catch(error => console.error('Error saving Reminder:', error));
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error setting reminder.");
+            });
         }
 
 
+        // Function to close the reminder popup
+        function closeReminderPopup(button) {
+            button.parentNode.remove();
+        }
+
+
+        // Delete Notification
+        function deleteNotification(button) {
+            button.parentElement.remove();
+        }
 
 
         // Fetch and display resources dynamically
@@ -477,9 +508,8 @@
             setTimeout(() => { msg.remove(); }, 1000);
         }
         </script>
-        <!-- <script src="{{ url_for('static', filename='js/suggestion.js') }}"></script> -->
+        <script src="{{ url_for('static', filename='js/suggestion.js') }}"></script>
 
 
 </body>
 </html>
-

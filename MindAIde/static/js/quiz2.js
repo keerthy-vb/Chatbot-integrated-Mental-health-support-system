@@ -1,15 +1,22 @@
-const submitQuiz = async () => {
+const submitQuiz = async (event) => {
+    event.preventDefault(); // Prevent default form submission
+
     const email = document.getElementById("email")?.value || "";
     const name = document.getElementById("name")?.value || "";
-    // const user_id = localStorage.getItem("_id");
+    const user_id = localStorage.getItem("_id"); // Ensure user ID is retrieved
+    // console.log("user  id from console", user_id);
 
     // if (!user_id) {
     //     alert("Error: User ID not found. Please log in again.");
     //     return;
     // }
 
+    // Extract selected answers
     const answers = Array.from(document.querySelectorAll("input[type='radio']:checked"))
-                         .map(input => parseInt(input.value));
+                         .map(input => {
+                             const [category, score] = input.value.split(":");
+                             return { category, score: parseInt(score) };
+                         });
 
     const payload = {
         _id: user_id,
@@ -44,4 +51,5 @@ const submitQuiz = async () => {
     }
 };
 
+// Attach event listener to button
 document.getElementById("submitBtn").addEventListener("click", submitQuiz);

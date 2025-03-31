@@ -40,8 +40,6 @@ quiz_collection = db["quiz_questions"]
 quiz_results_collection = db["quiz_results"]
 selfcare_collection = db["selfcare_resources"] 
 therapist_collection = db["therapists"]
-todos_collection = db["todos"]
-notifications_collection = db["notifications"]
  # Added self-care collection
 
 # Register Blueprints
@@ -412,83 +410,69 @@ def logout():
     return redirect(url_for("home"))
 
 # Function to calculate quiz result
-# Function to calculate quiz result based on answers
 def calculate_result(selected_answers):
     category_scores = {"Anxiety": 0, "Depression": 0, "Stress": 0, "Normal": 0}
-
+    
     for answer in selected_answers:
-        if ":" not in answer or answer.endswith(":"):  
-            continue  # Skip invalid/missing answers
-        
-        try:
-            category, score = answer.split(":")
-            category_scores[category] += int(score)
-        except ValueError:
-            continue  
-
-    print(f"Final category scores: {category_scores}")  # Debugging output
-
-    # 🔥 **Correct Fix for "All Never" Case**
-    if all(score == 0 for cat, score in category_scores.items() if cat != "Normal"):
-        return "Normal"  # If every category except "Normal" is zero, return "Normal"
-
-    # Finding the highest-scoring category
-    max_score = max(category_scores.values())  
-    highest_categories = [cat for cat, score in category_scores.items() if score == max_score]
-
-    # **Advanced Tie-Breaking Logic**
-    if len(highest_categories) > 1:
-        priority_order = ["Depression", "Anxiety", "Stress", "Normal"]  
-        for category in priority_order:
-            if category in highest_categories:
-                return category
-
-    return highest_categories[0]  # Return the highest-scoring category
-
-
-
-
+        category, score = answer.split(":")
+        category_scores[category] += int(score)
+    
+    return max(category_scores, key=category_scores.get)
 
 @app.route("/quiz_page")
 def quiz_page():
     if "user" not in session:
-        return redirect(url_for("dashboard"))
-
-    questions = list(quiz_collection.find({}, {"_id": 0}))  # Fetch all questions
+        return redirect(url_for("login"))
+    
+    questions = list(quiz_collection.find({}, {"_id": 0}))
     return render_template("quiz.html", questions=questions)
 
-@app.route('/submit_quiz', methods=['POST'])
+@app.route("/submit_quiz", methods=["POST"])
 def submit_quiz():
-    if "user" not in session:
-        return redirect(url_for("dashboard"))
+    print("📌 Received Request")  # Debugging
 
-    # Ensure all questions are answered
-    answers = list(request.form.values())  # Collect selected answers
-    print("Received Answers:", answers)
-    if not answers or "" in answers:  # Check if any answer is missing
-        flash("Please answer all questions before submitting.", "danger")
-        return redirect(url_for("quiz_page"))  # Redirect back to quiz page
+    # Check if request Content-Type is application/json
+    if request.content_type != "application/json":
+        print("❌ Invalid Content-Type:", request.content_type)  # Debugging
+        return jsonify({"error": "Invalid Content-Type. Expected application/json"}), 400
 
-    result_category = calculate_result(answers)  # Determine category
+    try:
+        # Get JSON data
+        data = request.get_json()
+        print("📌 Received Data:", data)  # Debugging
 
-    # Store quiz result in MongoDB
-    quiz_results_collection = db["quiz_results"]
-    quiz_results_collection.insert_one({
-        "user_id": session["user_id"],
-        "name": session["user"],
-        "quiz_result": result_category
-    })
+        if not data:
+            print("❌ No JSON data received")  # Debugging
+            return jsonify({"error": "Invalid request data"}), 400
 
-    return render_template("quiz_result.html", result=result_category)
+        user_id = data.get("_id")
+        email = data.get("email")
+        name = data.get("name")
+        answers = data.get("answers")
+
+        # if not user_id or not answers:
+            # return jsonify({"error": "Missing required fields"}), 400
+
+        print(f"✅ User: {name} ({email}), Answers: {answers}")  # Debugging
+
+        # Placeholder logic for calculating quiz result
+        result_category = "Anxiety"  # Change this to actual logic
+
+        return jsonify({"category": result_category})
+        # return render_template("quiz_result.html")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify({"error": "Internal server error found"}), 500
 
 
 
+@app.route("/quiz_result")
+def quiz_result():
+    if "quiz_result" not in session:
+        return redirect(url_for("patient_dashboard"))  # Prevent direct access
 
-# Route to fetch quiz results (For Testing)
-@app.route('/get_results', methods=['GET'])
-def get_results():
-    results = list(quiz_results_collection.find({}, {"_id": 0}))
-    return jsonify(results)
+    return render_template("quiz_result.html", result=session["quiz_result"])
 
 
 
@@ -497,6 +481,12 @@ def get_results():
 def check_session():
     return jsonify({"user_id": session.get("user_id")})
 
+
+
+@app.route("/get_results", methods=["GET"])
+def get_results():
+    results = list(quiz_results_collection.find({}, {"_id": 0}))
+    return jsonify(results)
 
 # Chatbot Page
 @app.route("/chatbot_page")
@@ -543,55 +533,7 @@ def get_resources():
 
     return jsonify(resource_data)
 
-#todo and notifications
 
-@app.route("/add_todo", methods=["POST"])
-def add_todo():
-    data = request.json
-    print("Received To-Do:", data)
-    todos_collection.insert_one({"text": data["text"]})
-    return jsonify({"message": "To-Do saved successfully!"})
-
-@app.route("/get_todos", methods=["GET"])
-def get_todos():
-    todos = list(todos_collection.find({}, {"_id": 0}))
-    return jsonify(todos)
-
-@app.route("/delete_todo", methods=["POST"])
-def delete_todo():
-    data = request.json
-    todos_collection.delete_one({"text": data["text"]})
-    return jsonify({"message": "To-Do deleted successfully!"})
-
-@app.route("/add_notification", methods=["POST"])
-def add_notification():
-    data = request.json
-    print("Received Notification:", data)
-    notifications_collection.insert_one({"text": data["text"], "time": data["time"]})
-    return jsonify({"message": "Notification saved successfully!"})
-
-@app.route("/get_notifications", methods=["GET"])
-def get_notifications():
-    notifications = list(notifications_collection.find({}, {"_id": 0}))
-    return jsonify(notifications)
-
-# @app.route("/update_notification", methods=["POST"])
-# def update_notification():
-#     data = request.json
-#     notification_id = data["id"]
-#     new_status = data["status"]
-#     notifications_collection.update_one(
-#         {"_id": ObjectId(notification_id)},
-#         {"$set": {"status": new_status}}
-#     )
-#     return jsonify({"message": "Notification updated successfully!"})
-
-# @app.route("/delete_notification", methods=["POST"])
-# def delete_notification():
-#     data = request.json
-#     notification_id = data["id"]
-#     notifications_collection.delete_one({"_id": ObjectId(notification_id)})
-#     return jsonify({"message": "Notification deleted successfully!"})
 
 if __name__ == "__main__":
     app.run(debug=True)
