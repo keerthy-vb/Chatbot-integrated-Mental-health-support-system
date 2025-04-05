@@ -35,13 +35,20 @@ Session(app)
 # MongoDB Connection
 client = MongoClient("mongodb://localhost:27017/")
 db = client["mental_health_db"]
+
+app.config['DB'] = db
+
 users_collection = db["users"]
 quiz_collection = db["quiz_questions"]
 quiz_results_collection = db["quiz_results"]
 selfcare_collection = db["selfcare_resources"] 
-therapist_collection = db["therapists"]
+#therapist_collection = db["therapists"]
 todos_collection = db["todos"]
 notifications_collection = db["notifications"]
+appointments_collection = db["appointments"]
+
+
+
  # Added self-care collection
 
 # Register Blueprints
@@ -49,8 +56,8 @@ app.register_blueprint(quiz_bp, url_prefix="/quiz")
 app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
 
 app.register_blueprint(selfcare_bp, url_prefix="/selfcare")
-app.register_blueprint(appointments_bp)
-app.register_blueprint(therapists_bp, url_prefix="/")
+app.register_blueprint(appointments_bp, url_prefix='/appointments')
+#app.register_blueprint(therapists_bp, url_prefix="/")
 
 
 
@@ -76,6 +83,8 @@ def register():
         specialization = data.get("specialization")
         qualification = data.get("qualification")
         experience = data.get("experience")
+        contact = data.get("contact")
+
         patient_email = data.get("patient_email")
 
         # ✅ Validate required fields
@@ -115,13 +124,22 @@ def register():
                 "interests": interests or []
             })
         elif role == "Therapist":
-            if not specialization or not qualification or not experience:
-                return jsonify({"success": False, "message": "Specialization, Qualification, and Experience are required for Therapists"}), 400
+            if not specialization or not qualification or not experience or not contact:
+                return jsonify({"success": False, "message": "Specialization, Qualification, Experience, and Contact are required for Therapists"}), 400
+            
+            # Optional: Validate phone number format
+            if not re.fullmatch(r"\d{10}", contact):
+                return jsonify({"success": False, "message": "Contact must be a valid 10-digit number"}), 400
+
             user_data.update({
                 "specialization": specialization,
                 "qualification": qualification,
-                "experience": int(experience)  # Convert experience to integer
+                "experience": int(experience),
+                "contact": contact,
+                "verified": False
             })
+
+            
         elif role == "Caretaker":
             if not patient_email or not users_collection.find_one({"email": patient_email, "role": "Patient"}):
                 return jsonify({"success": False, "message": "Invalid patient email"}), 400
@@ -144,8 +162,11 @@ def login():
     print("Form Data:", request.form)  # Debugging
 
     if request.method == "POST":
-        email = request.json["email"]
-        password = request.json["password"]
+        email = request.json.get("email")
+        password = request.json.get("password")
+
+        if not email or not password:
+            return jsonify({"error": "Email and password are required!"}), 400
 
         user = users_collection.find_one({"email": email})
         print("User Found:", user)  # Debugging
@@ -155,21 +176,17 @@ def login():
             print("Entered Password:", password)  # Debugging
             print("Password Match:", check_password_hash(user["password"], password))  # Debugging
 
-        # hashedpwd = generate_password_hash(password=password)
         if user and check_password_hash(user["password"], password):
-            print("Login successful for:", user["name"])  # Debugging
-            session["user"] = user 
-            session["_id"]=user["_id"]
-            session["user_id"]=str(user["_id"])
-            flash("Email and password are required!", "danger")  
-            # return redirect(url_for("patient_dashboard"))
-            return jsonify({"redirect": url_for("dashboard")}), 200  # JSON response for frontend
-
-        flash("Invalid credentials. Try again!", "danger")
-        # return redirect(url_for("login"))
-        return jsonify({"redirect": url_for("login")}), 400
+            print("Login successful for:", user["name"])
+            session["user"] = user
+            session["_id"] = user["_id"]
+            session["user_id"] = str(user["_id"])
+            return jsonify({"redirect": url_for("dashboard")}), 200
+        else:
+            return jsonify({"error": "Invalid credentials. Try again!"}), 400
 
     return render_template("login.html")
+
 
     
 @app.route("/dashboard")
@@ -315,72 +332,294 @@ def add_quiz():
 
     except Exception as e:
         return f"Error: {str(e)}", 500
+    
+
+# @app.route('/therapist_suggestions')
+# def therapist_suggestions():
+#     verified_therapists = list(users_collection.find({
+#         "role": "therapist",
+#         "verified": True
+#     }))
+#     return render_template("therapist_suggestions.html", therapists=verified_therapists)
 
 
+@app.route('/request_appointment/<therapist_id>', methods=['POST'])
+def request_appointment(therapist_id):
+    patient_id = session.get("user_id")
+    if not patient_id:
+        flash("Please log in first!", "danger")
+        return redirect(url_for("login"))
 
-@app.route('/manage_therapists')
-def manage_therapists():
-    therapists = therapist_collection.find()
-    return render_template('manage_therapists.html', therapists=therapists)
-
-
-@app.route('/add_therapist', methods=['POST'])
-def add_therapist():
-    """Add a new therapist."""
-    name = request.form['name']
-    specialization = request.form['specialization']
-    qualifications = request.form['qualifications']
-    contact = request.form['contact']
-
-    therapist_data = {
-        "name": name,
-        "specialization": specialization,
-        "qualifications": qualifications,
-        "contact": contact,
-        "verified": False
+    appointment = {
+        "patient_id": patient_id,
+        "therapist_id": therapist_id,
+        "status": "Pending"
     }
 
-    therapist_collection.insert_one(therapist_data)
-    flash("Therapist added successfully!", "success")
-    return redirect(url_for('manage_therapists'))
+    db.appointments.insert_one(appointment)
+    flash("Appointment request sent!", "success")
+    return redirect(url_for("therapist_suggestions"))
 
-@app.route('/update_therapist/<therapist_id>', methods=['POST'])
-def update_therapist(therapist_id):
-    """Update therapist details."""
-    name = request.form['name']
-    specialization = request.form['specialization']
-    qualifications = request.form['qualifications']
-    contact = request.form['contact']
 
-    therapist_collection.update_one(
-        {"_id": ObjectId(therapist_id)},
-        {"$set": {
-            "name": name,
-            "specialization": specialization,
-            "qualifications": qualifications,
-            "contact": contact
-        }}
+
+
+
+
+# @app.route('/manage_therapists')
+# def manage_therapists():
+#     # Fetch all therapists from MongoDB
+#     therapists = list(therapist_collection.find())
+
+#     # Ensure 'verified' field exists in all records
+#     for t in therapists:
+#         if 'verified' not in t:
+#             t['verified'] = False  # Default to False for pending therapists
+
+#     return render_template('manage_therapists.html', therapists=therapists)
+
+
+# @app.route('/manage_therapists')
+# def manage_therapists():
+#     verified_therapists = list(therapist_collection.find({"verified": True}))
+#     unverified_therapists = list(therapist_collection.find({"verified": False}))
+
+#     return render_template('manage_therapists.html', 
+#                            verified_therapists=verified_therapists, 
+#                            unverified_therapists=unverified_therapists)
+
+
+
+# @app.route('/add_therapist', methods=['POST'])
+# def add_therapist():
+#     """Add a new therapist."""
+#     name = request.form['name']
+#     specialization = request.form['specialization']
+#     qualifications = request.form['qualifications']
+#     contact = request.form['contact']
+
+#     therapist_data = {
+#         "name": name,
+#         "specialization": specialization,
+#         "qualifications": qualifications,
+#         "contact": contact,
+#         "verified": False
+#     }
+
+#     therapist_collection.insert_one(therapist_data)
+#     flash("Therapist added successfully!", "success")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/update_therapist/<therapist_id>', methods=['POST'])
+# def update_therapist(therapist_id):
+#     """Update therapist details."""
+#     name = request.form['name']
+#     specialization = request.form['specialization']
+#     qualifications = request.form['qualifications']
+#     contact = request.form['contact']
+
+#     therapist_collection.update_one(
+#         {"_id": ObjectId(therapist_id)},
+#         {"$set": {
+#             "name": name,
+#             "specialization": specialization,
+#             "qualifications": qualifications,
+#             "contact": contact
+#         }}
+#     )
+
+#     flash("Therapist details updated!", "success")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/delete_therapist/<therapist_id>', methods=['POST'])
+# def delete_therapist(therapist_id):
+#     """Delete therapist profile."""
+#     therapist_collection.delete_one({"_id": ObjectId(therapist_id)})
+#     flash("Therapist deleted!", "danger")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/verify_therapist/<therapist_id>')
+# def verify_therapist(therapist_id):
+#     """Verify therapist profile."""
+#     therapist_collection.update_one(
+#         {"_id": ObjectId(therapist_id)},
+#         {"$set": {"verified": True}}
+#     )
+#     flash("Therapist verified!", "success")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/reject_therapist/<therapist_id>')
+# def reject_therapist(therapist_id):
+#     """Reject therapist profile and remove it from the database."""
+#     therapist_collection.delete_one({"_id": ObjectId(therapist_id)})
+#     flash("Therapist rejected and removed!", "danger")
+#     return redirect(url_for('manage_therapists'))
+
+
+# from bson import ObjectId
+
+# Show Manage Therapists Page (Admin Dashboard)
+@app.route('/manage_therapists')
+def manage_therapists():
+    # Update any therapists who don't have the 'verified' field
+    users_collection.update_many(
+        {"role": "Therapist", "verified": {"$exists": False}},
+        {"$set": {"verified": False}}
     )
 
-    flash("Therapist details updated!", "success")
-    return redirect(url_for('manage_therapists'))
+    unverified_therapists = list(users_collection.find({
+        "role": "Therapist",
+        "verified": False
+    }))
 
-@app.route('/delete_therapist/<therapist_id>', methods=['POST'])
-def delete_therapist(therapist_id):
-    """Delete therapist profile."""
-    therapist_collection.delete_one({"_id": ObjectId(therapist_id)})
-    flash("Therapist deleted!", "danger")
-    return redirect(url_for('manage_therapists'))
+    verified_therapists = list(users_collection.find({
+        "role": "Therapist",
+        "verified": True
+    }))
+
+    return render_template('manage_therapists.html',
+                           unverified_therapists=unverified_therapists,
+                           verified_therapists=verified_therapists)
+
+
+
+
+# Register Therapist (or Admin adding one manually)
+# @app.route('/add_therapist', methods=['POST'])
+# def add_therapist():
+#     name = request.form['name']
+#     specialization = request.form['specialization']
+#     qualifications = request.form['qualifications']
+#     contact = request.form['contact']
+#     email = request.form['email']
+#     password = generate_password_hash(request.form['password'])
+
+#     therapist_data = {
+#         "name": name,
+#         "email": email,
+#         "password": password,
+#         "specialization": specialization,
+#         "qualifications": qualifications,
+#         "contact": contact,
+#         "role": "therapist",
+#         "verified": False
+#     }
+
+#     users_collection.insert_one(therapist_data)
+#     flash("Therapist registered and pending verification.", "info")
+#     return redirect(url_for('manage_therapists'))
+
+# Verify Therapist
+# @app.route('/verify_therapist/<therapist_id>')
+# def verify_therapist(therapist_id):
+#     users_collection.update_one(
+#         {"_id": ObjectId(therapist_id)},
+#         {"$set": {"verified": True}}
+#     )
+#     flash("Therapist has been verified.", "success")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/reject_therapist/<therapist_id>')
+# def reject_therapist(therapist_id):
+#     users_collection.delete_one({"_id": ObjectId(therapist_id)})
+#     flash("Therapist rejected and deleted.", "danger")
+#     return redirect(url_for('manage_therapists'))
+
+
+# # Update Therapist (optional)
+# @app.route('/update_therapist/<therapist_id>', methods=['POST'])
+# def update_therapist(therapist_id):
+#     users_collection.update_one(
+#         {"_id": ObjectId(therapist_id)},
+#         {"$set": {
+#             "name": request.form['name'],
+#             "specialization": request.form['specialization'],
+#             "qualifications": request.form['qualifications'],
+#             "contact": request.form['contact']
+#         }}
+#     )
+#     flash("Therapist details updated.", "success")
+#     return redirect(url_for('manage_therapists'))
+
+# @app.route('/delete_therapist/<therapist_id>')
+# def delete_therapist(therapist_id):
+#     users_collection.delete_one({"_id": ObjectId(therapist_id)})
+#     flash("Therapist deleted successfully.", "danger")
+#     return redirect(url_for('manage_therapists'))
+
+
 
 @app.route('/verify_therapist/<therapist_id>')
 def verify_therapist(therapist_id):
-    """Verify therapist profile."""
-    therapist_collection.update_one(
+    users_collection.update_one(
         {"_id": ObjectId(therapist_id)},
         {"$set": {"verified": True}}
     )
-    flash("Therapist verified!", "success")
+    flash("Therapist has been verified.", "success")
     return redirect(url_for('manage_therapists'))
+
+@app.route('/reject_therapist/<therapist_id>')
+def reject_therapist(therapist_id):
+    users_collection.delete_one({"_id": ObjectId(therapist_id)})
+    flash("Therapist application has been rejected.", "warning")
+    return redirect(url_for('manage_therapists'))
+
+# @app.route('/edit_therapist/<therapist_id>', methods=['GET', 'POST'])
+# def edit_therapist(therapist_id):
+#     therapist = users_collection.find_one({"_id": ObjectId(therapist_id)})
+
+#     if request.method == 'POST':
+#         updated_data = {
+#             "name": request.form['name'],
+#             "email": request.form['email'],
+#             "specialization": request.form['specialization'],
+#             "qualification": request.form['qualification'],
+#             "experience": request.form['experience'],
+#             "contact": request.form['contact']
+#         }
+#         users_collection.update_one(
+#             {"_id": ObjectId(therapist_id)},
+#             {"$set": updated_data}
+#         )
+#         flash("Therapist information updated.", "success")
+#         return redirect(url_for('manage_therapists'))
+
+#     return render_template("edit_therapist.html", therapist=therapist)
+
+@app.route('/edit_therapist/<therapist_id>')
+def edit_therapist(therapist_id):
+    therapist = users_collection.find_one({"_id": ObjectId(therapist_id)})
+    return render_template('edit_therapist.html', therapist=therapist)
+
+@app.route('/update_therapist/<therapist_id>', methods=['POST'])
+def update_therapist(therapist_id):
+    updated_data = {
+        "name": request.form['name'],
+        "email": request.form['email'],
+        "specialization": request.form['specialization'],
+        "qualification": request.form['qualification'],
+        "experience": request.form['experience'],
+        "contact": request.form['contact']
+    }
+
+    users_collection.update_one(
+        {"_id": ObjectId(therapist_id)},
+        {"$set": updated_data}
+    )
+
+    flash("Therapist details updated successfully.", "success")
+    return redirect(url_for('manage_therapists'))
+
+
+
+@app.route('/delete_therapist/<therapist_id>')
+def delete_therapist(therapist_id):
+    users_collection.delete_one({"_id": ObjectId(therapist_id)})
+    flash("Therapist has been deleted.", "danger")
+    return redirect(url_for('manage_therapists'))
+
+
+
+
 
 
 

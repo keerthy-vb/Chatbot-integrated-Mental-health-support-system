@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Therapists</title>
     <style>
         body {
@@ -11,42 +10,15 @@
             text-align: center;
             padding: 20px;
         }
-        h2 {
+        h2, h3 {
             color: #333;
         }
-        form {
-            background: white;
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 400px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #ff758c;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #ff4b5c;
-        }
         table {
-            width: 90%;
-            margin: auto;
+            width: 95%;
+            margin: 20px auto;
             border-collapse: collapse;
             background: white;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             border-radius: 10px;
             overflow: hidden;
         }
@@ -59,63 +31,25 @@
             background: #ff758c;
             color: white;
         }
-        td {
-            background: #fff;
-        }
         .action-btn {
             padding: 7px 12px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
-            margin: 5px;
+            margin: 3px;
+            color: white;
+            text-decoration: none;
         }
-        .verify-btn { background: #4CAF50; color: white; }
-        .edit-btn { background: #3498db; color: white; }
-        .delete-btn { background: #e74c3c; color: white; }
+        .verify-btn { background: #4CAF50; }
+        .delete-btn { background: #e74c3c; }
+        .edit-btn { background: #f39c12; }
         .verify-btn:hover { background: #45a049; }
-        .edit-btn:hover { background: #2980b9; }
         .delete-btn:hover { background: #c0392b; }
-
-        /* Modal Styling */
-        #editModal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-            width: 300px;
-        }
-        .modal-btn {
-            background: #27ae60;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .modal-btn:hover {
-            background: #219150;
-        }
-        .close-btn {
-            background: #e74c3c;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .close-btn:hover {
-            background: #c0392b;
-        }
+        .edit-btn:hover { background: #d68910; }
         .dashboard-link {
             display: inline-block;
-            margin-top: 20px;
+            margin-top: 30px;
             padding: 10px 15px;
             background: #3498db;
             color: white;
@@ -128,90 +62,80 @@
     </style>
 </head>
 <body>
-    <h2>Manage Therapists</h2>
 
-    <!-- Add Therapist Form -->
-    <form method="POST" action="{{ url_for('add_therapist') }}">
-        <input type="text" name="name" placeholder="Therapist Name" required>
-        <input type="text" name="specialization" placeholder="Specialization" required>
-        <input type="text" name="qualifications" placeholder="Qualifications" required>
-        <input type="text" name="contact" placeholder="Contact (Phone/Email)" required>
-        <button type="submit">Add Therapist</button>
-    </form>
-
-    <!-- Therapist List -->
-    <table>
-        <tr>
-            <th>Name</th>
-            <th>Specialization</th>
-            <th>Qualifications</th>
-            <th>Contact</th>
-            <th>Verified</th>
-            <th>Actions</th>
-        </tr>
-        {% for t in therapists %}
-        <tr>
-            <td>{{ t['name'] }}</td>
-            <td>{{ t['specialization'] }}</td>
-            <td>{{ t['qualifications'] }}</td>
-            <td>{{ t['contact'] }}</td>
-            <td>
-                {% if t['verified'] %}
-                    ✅ Verified
-                {% else %}
-                    ❌ Not Verified
-                {% endif %}
-            </td>
-            <td>
-                <a href="{{ url_for('verify_therapist', therapist_id=t['_id']|string) }}" class="action-btn verify-btn">Verify</a>
-
-                <button class="action-btn edit-btn" 
-                    onclick="editTherapist('{{ t['_id']|string }}', 
-                                           `{{ t['name']|safe }}`, 
-                                           `{{ t['specialization']|safe }}`, 
-                                           `{{ t['qualifications']|safe }}`, 
-                                           `{{ t['contact']|safe }}`)">
-                    Edit
-                </button>
+<h2>Manage Therapists</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
 
-                <form method="POST" action="{{ url_for('delete_therapist', therapist_id=t['_id']) }}" style="display:inline;">
-                    <button type="submit" class="action-btn delete-btn">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+<!-- Pending Therapists Table -->
+<h3>Pending Therapist Accounts</h3>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Specialization</th>
+        <th>Qualification</th>
+        <th>Experience</th>
+        <th>Contact</th>
+        <th>Actions</th>
+    </tr>
+    {% for t in unverified_therapists %}
+    <tr>
+        <td>{{ t.get('name', 'N/A') }}</td>
+        <td>{{ t.get('email', 'N/A') }}</td>
+        <td>{{ t.get('specialization', 'N/A') }}</td>
+        <td>{{ t.get('qualification', 'N/A') }}</td>
+        <td>{{ t.get('experience', 'N/A') }}</td>
+        <td>{{ t.get('contact', 'N/A') }}</td>
+        <td>
+            <a href="{{ url_for('verify_therapist', therapist_id=t['_id']) }}" class="action-btn verify-btn">Verify</a>
+            <a href="{{ url_for('reject_therapist', therapist_id=t['_id']) }}" class="action-btn delete-btn">Reject</a>
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7">No pending therapists found.</td></tr>
+    {% endfor %}
+</table>
 
-    <!-- Edit Therapist Modal -->
-    <div id="editModal">
-        <form method="POST" id="editForm">
-            <input type="hidden" name="therapist_id" id="editTherapistId">
-            <input type="text" name="name" id="editName" required>
-            <input type="text" name="specialization" id="editSpecialization" required>
-            <input type="text" name="qualifications" id="editQualifications" required>
-            <input type="text" name="contact" id="editContact" required>
-            <button type="submit" class="modal-btn">Update</button>
-            <button type="button" class="close-btn" onclick="closeModal()">Cancel</button>
-        </form>
-    </div>
+<!-- Verified Therapists Table -->
+<h3>Verified Therapists</h3>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Specialization</th>
+        <th>Qualification</th>
+        <th>Experience</th>
+        <th>Contact</th>
+        <th>Actions</th>
+    </tr>
+    {% for t in verified_therapists %}
+    <tr>
+        <td>{{ t.get('name', 'N/A') }}</td>
+        <td>{{ t.get('email', 'N/A') }}</td>
+        <td>{{ t.get('specialization', 'N/A') }}</td>
+        <td>{{ t.get('qualification', 'N/A') }}</td>
+        <td>{{ t.get('experience', 'N/A') }}</td>
+        <td>{{ t.get('contact', 'N/A') }}</td>
+        <td>
+            <a href="{{ url_for('edit_therapist', therapist_id=t['_id']) }}" class="action-btn edit-btn">Edit</a>
+            <a href="{{ url_for('delete_therapist', therapist_id=t['_id']) }}" class="action-btn delete-btn">Delete</a>
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7">No verified therapists found.</td></tr>
+    {% endfor %}
+</table>
 
-    <script>
-        function editTherapist(id, name, specialization, qualifications, contact) {
-            document.getElementById('editTherapistId').value = id;
-            document.getElementById('editName').value = name;
-            document.getElementById('editSpecialization').value = specialization;
-            document.getElementById('editQualifications').value = qualifications;
-            document.getElementById('editContact').value = contact;
-            document.getElementById('editForm').action = "/update_therapist/" + id;
-            document.getElementById('editModal').style.display = 'block';
-        }
+<a href="{{ url_for('admin_dashboard') }}" class="dashboard-link">← Back to Dashboard</a>
 
-        function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-    </script>
-
-    <a href="{{ url_for('admin_dashboard') }}" class="dashboard-link">Back to Dashboard</a>
 </body>
 </html>

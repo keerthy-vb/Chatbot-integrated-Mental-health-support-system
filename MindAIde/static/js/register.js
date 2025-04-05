@@ -45,6 +45,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 <label for="experience">Experience (Years):</label>
                 <input type="number" id="experience" name="experience" required>
 
+                <label for="contact">Contact:</label>
+                <input type="tel" id="contact" name="contact" pattern="[0-9]{10}" 
+                    maxlength="10" minlength="10" title="Enter a valid 10-digit phone number" required>
+
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
 

@@ -2,54 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Therapist Suggestions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f0f8ff;
+            background-color: #f2f6ff;
+            font-family: 'Segoe UI', sans-serif;
         }
-        .container {
-            width: 60%;
-            margin: auto;
-            padding: 20px;
-        }
-        .therapist-card {
-            background: white;
-            padding: 20px;
-            margin: 10px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .appointment-btn {
-            background: #1E90FF;
-            color: white;
-            padding: 10px;
+        .card {
             border: none;
-            cursor: pointer;
-            border-radius: 5px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .appointment-btn:hover {
-            background: #4682b4;
+        h2 {
+            font-weight: 600;
+            color: #333;
+        }
+        .btn-primary {
+            background-color: #7b4bff;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #6b3fe6;
         }
     </style>
 </head>
 <body>
-    <h2>Therapist Suggestions</h2>
-    <div class="container">
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Verified Therapist Suggestions</h2>
+    <div class="row justify-content-center">
         {% for therapist in therapists %}
-        <div class="therapist-card">
-            <h3>{{ therapist['name'] }}</h3>
-            <p><strong>Specialization:</strong> {{ therapist['specialization'] }}</p>
-            <p><strong>Experience:</strong> {{ therapist['experience'] }} years</p>
-            <form action="{{ url_for('therapists.request_appointment') }}" method="POST">
-                <input type="hidden" name="therapist_id" value="{{ therapist['_id'] }}">
-                <input type="text" name="patient_name" placeholder="Enter your name" required>
-                <button class="appointment-btn" type="submit">Request Appointment</button>
-            </form>
+        <div class="col-md-4 mb-4">
+            <div class="card p-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ therapist.name or 'N/A' }}</h5>
+                    <p><strong>Email:</strong> {{ therapist.email or 'N/A' }}</p>
+                    <p><strong>Specialization:</strong> {{ therapist.specialization or 'N/A' }}</p>
+                    <p><strong>Qualification:</strong> {{ therapist.qualification or 'N/A' }}</p>
+                    <p><strong>Experience:</strong> {{ therapist.experience or 'N/A' }} years</p>
+                    <p><strong>Contact:</strong> {{ therapist.contact or 'N/A' }}</p>
+
+                    {% set requested = false %}
+                    {% for req in requests %}
+                        {% if req.therapist_id == therapist._id %}
+                            {% set requested = true %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if requested %}
+                        <button class="btn btn-secondary w-100" disabled>Appointment Requested</button>
+                    {% else %}
+                        <form action="{{ url_for('appointments.request_appointment', therapist_id=therapist._id) }}" method="POST">
+                            <button class="btn btn-primary w-100">Request Appointment</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         {% endfor %}
+
     </div>
+</div>
+
 </body>
 </html>
