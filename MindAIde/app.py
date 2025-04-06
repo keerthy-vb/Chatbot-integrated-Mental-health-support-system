@@ -705,9 +705,110 @@ def reject_appointment(appointment_id):
     return redirect(url_for('therapist_dashboard'))
 
 
-@app.route("/caretaker_dashboard")
+
+
+@app.route('/caretaker_dashboard')
 def caretaker_dashboard():
-    return render_template("caretaker_dashboard.html", user=session["user"])
+    if 'user_id' not in session:
+        flash("Please log in to continue.", "warning")
+        return redirect(url_for('login'))
+
+    # Get the logged-in caretaker
+    caretaker = mongo.db.users.find_one({"_id": ObjectId(session['user_id'])})
+
+    if not caretaker or caretaker.get('role') != 'Caretaker':
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('login'))
+
+    # Get linked patient
+    patient_email = caretaker.get("patient_email", "").strip().lower()
+    patient = mongo.db.users.find_one({"email": patient_email, "role": "Patient"})
+
+    return render_template(
+        'caretaker_dashboard.html',
+        caretaker=caretaker,
+        patient=patient
+    )
+
+
+
+@app.route('/caretaker/therapist_suggestions/<patient_email>')
+def caretaker_therapist_suggestions(patient_email):
+    if 'user_id' not in session:
+        flash("Please log in to continue.", "warning")
+        return redirect(url_for('login'))
+
+    # Get the caretaker from the session
+    caretaker = mongo.db.users.find_one({"_id": ObjectId(session['user_id'])})
+
+    # Make sure user is a Caretaker
+    if not caretaker or caretaker['role'] != 'Caretaker':
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('login'))
+
+    # Get the patient from email
+    patient = mongo.db.users.find_one({"email": patient_email, "role": "Patient"})
+    if not patient:
+        flash("Patient not found.", "danger")
+        return redirect(url_for('caretaker_dashboard'))
+
+    patient_id = str(patient['_id'])
+
+    # Fetch all verified therapists
+    therapists = list(mongo.db.users.find({"role": "Therapist", "verified": True}))
+    for therapist in therapists:
+        therapist['_id'] = str(therapist['_id'])
+
+    # Fetch existing appointment requests made by this patient
+    requests = list(mongo.db.appointments.find({"patient_id": patient_id}))
+
+    appointment_map = {
+        req["therapist_id"]: req["status"] for req in requests
+    }
+
+    return render_template(
+        "therapist_suggestions.html",
+        therapists=therapists,
+        appointment_map=appointment_map,
+        requests=requests,
+        patient=patient  # optional if you want to show patient name in template
+    )
+
+
+
+@app.route('/selfcare_suggestions/<patient_email>')
+def selfcare_suggestions(patient_email):
+    # Step 1: Get patient by email
+    patient = mongo.db.users.find_one({"email": patient_email})
+    if not patient:
+        flash("Patient not found.", "danger")
+        return redirect(url_for('caretaker_dashboard'))
+
+    # Step 2: Use existing logic to fetch patient self-care content
+    # Here we simply send the patient to suggestions.html with their data
+    return render_template('suggestions.html', user=patient)
+
+
+
+
+# @app.route('/caretaker_therapist_suggestions/<patient_email>')
+# def caretaker_therapist_suggestions(patient_email):
+#     patient = mongo.db.users.find_one({"email": patient_email})
+#     if not patient:
+#         flash("Patient not found.", "danger")
+#         return redirect(url_for('caretaker_dashboard'))
+
+#     # Get all verified therapists
+#     therapists = list(mongo.db.users.find({"role": "Therapist", "verified": True}))
+
+#     # Get appointment requests made by patient
+#     requests = list(mongo.db.appointments.find({"patient_id": str(patient['_id'])}))
+
+#     return render_template("therapist_suggestions.html", therapists=therapists, requests=requests)
+
+
+
+
 
 @app.route("/patient_dashboard")
 def patient_dashboard():

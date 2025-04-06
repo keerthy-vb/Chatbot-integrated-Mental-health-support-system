@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Caretaker Dashboard</title>
+    <!-- Bootstrap for beautiful layout -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <!-- Title -->
+    <h2 class="text-center mb-4">Welcome, {{ caretaker.name }}</h2>
+
+    {% if patient %}
+    <!-- Patient Profile Info -->
+    <div class="card shadow p-4 mb-4">
+        <h4>Patient Profile</h4>
+        <p><strong>Name:</strong> {{ patient.name }}</p>
+        <p><strong>Email:</strong> {{ patient.email }}</p>
+        <p><strong>Gender:</strong> {{ patient.gender or "N/A" }}</p>
+        <p><strong>Age:</strong> {{ patient.age or "N/A" }}</p>
+    </div>
+
+    <!-- Two cards for redirection -->
+    <div class="row">
+        <!-- Self-Care Button -->
+        <div class="col-md-6">
+            <div class="card shadow p-4 mb-4">
+                <h5>🧘 Self-Care Suggestions</h5>
+                <p>View the patient's self-care routines and activities.</p>
+                <a href="{{ url_for('selfcare_suggestions', patient_email=patient.email) }}" class="btn btn-info w-100">Go to Self-Care</a>
+            </div>
+        </div>
+
+        <!-- Therapist Suggestions Button -->
+        <div class="col-md-6">
+            <div class="card shadow p-4 mb-4">
+                <h5>👩‍⚕️ Therapist Suggestions</h5>
+                <p>View and track therapist recommendations and appointments.</p>
+                <a href="{{ url_for('caretaker_therapist_suggestions', patient_email=patient.email) }}" class="btn btn-primary w-100">
+                    Go to Therapist Suggestions
+                </a>
+                
+
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">No patient linked to this caretaker account.</div>
+    {% endif %}
+</div>
+</body>
+</html>
