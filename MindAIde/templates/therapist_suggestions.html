@@ -29,7 +29,7 @@
 </head>
 <body>
 
-<div class="container mt-5">
+<!-- <div class="container mt-5">
     <h2 class="text-center mb-4">Verified Therapist Suggestions</h2>
     <div class="row justify-content-center">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -85,7 +85,55 @@
 
 
     </div>
+</div> -->
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Verified Therapist Suggestions</h2>
+    <div class="row justify-content-center">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% for therapist in therapists %}
+            <div class="col-md-4 mb-4">
+                <div class="card p-3 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ therapist.name or 'N/A' }}</h5>
+                        <p><strong>Email:</strong> {{ therapist.email or 'N/A' }}</p>
+                        <p><strong>Specialization:</strong> {{ therapist.specialization or 'N/A' }}</p>
+                        <p><strong>Qualification:</strong> {{ therapist.qualification or 'N/A' }}</p>
+                        <p><strong>Experience:</strong> {{ therapist.experience or 'N/A' }} years</p>
+                        <p><strong>Contact:</strong> {{ therapist.contact or 'N/A' }}</p>
+
+                        {% set status = appointment_map.get(therapist._id) %}
+
+                        {% if status %}
+                            {% if status == "Pending" %}
+                                <button class="btn btn-warning w-100" disabled>Appointment Pending</button>
+                            {% elif status == "Accepted" %}
+                                <button class="btn btn-success w-100" disabled>Appointment Accepted</button>
+                            {% elif status == "Rejected" %}
+                                <button class="btn btn-danger w-100" disabled>Appointment Rejected</button>
+                            {% endif %}
+                        {% else %}
+                            <form action="{{ url_for('request_appointment', therapist_id=therapist._id) }}" method="POST">
+                                <input type="text" name="interest" class="form-control mb-2" placeholder="Mention your concern" required>
+                                <button class="btn btn-primary w-100">Request Appointment</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 </div>
+
 
 </body>
 </html>

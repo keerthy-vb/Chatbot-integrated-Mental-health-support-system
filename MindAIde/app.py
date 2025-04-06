@@ -908,9 +908,14 @@ def therapist_suggestions():
     # Fetch existing appointment requests made by this user
     requests = list(mongo.db.appointments.find({"patient_id": user_id}))
 
+    appointment_map = {
+        req["therapist_id"]: req["status"] for req in requests
+    }
+
     return render_template(
         "therapist_suggestions.html",
         therapists=therapists,
+        appointment_map=appointment_map,
         requests=requests
     )
 
