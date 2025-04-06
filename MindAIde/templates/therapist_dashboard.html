@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Therapist Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <h2 class="mb-4">Your Appointment Requests</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if requests %}
+        <div class="row">
+            {% for req in requests %}
+                <div class="col-md-6 mb-4">
+                    <div class="card p-3">
+                        <div class="card-body">
+                            <h5>Status: 
+                                <span class="badge 
+                                    {% if req.status == 'Pending' %}bg-warning text-dark
+                                    {% elif req.status == 'Accepted' %}bg-success
+                                    {% else %}bg-danger
+                                    {% endif %}">
+                                    {{ req.status }}
+                                </span>
+                            </h5>
+                            <p><strong>Name:</strong> {{ req.patient_name or 'N/A' }}</p>
+                            <p><strong>Email:</strong> {{ req.patient_email or 'N/A' }}</p>
+                            <p><strong>Age:</strong> {{ req.patient_age or 'N/A' }}</p>
+                            <p><strong>Gender:</strong> {{ req.patient_gender or 'N/A' }}</p>
+                            <p><strong>Interest:</strong> {{ req.interest or 'N/A' }}</p>
+
+
+                            {% if req.status == 'Pending' %}
+                                <form method="GET" action="{{ url_for('accept_appointment', appointment_id=req._id) }}">
+                                    <button class="btn btn-success btn-sm">Accept</button>
+                                </form>
+                                <form method="GET" action="{{ url_for('reject_appointment', appointment_id=req._id) }}" class="mt-1">
+                                    <button class="btn btn-danger btn-sm">Reject</button>
+                                </form>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">No appointment requests yet.</div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify,flash
 from pymongo import MongoClient
+from flask_pymongo import PyMongo
 #from flask_pymongo import PyMongo
 from flask_session import Session
 import hashlib
@@ -12,10 +13,11 @@ import re
 # from werkzeug.security import generate_password_hash, check_password_hash
 from hash_service import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId  # Ensure ObjectId conversion
+from datetime import datetime
 from quiz import quiz_bp  # Importing quiz blueprint
 from chatbot import chatbot_bp  # Importing chatbot blueprint
 from selfcare import selfcare_bp  # Importing self-care blueprint
-from appointments import appointments_bp
+# from appointments import appointments_bp
 from therapists import therapists_bp
 from flask_cors import CORS
 #import bcrypt
@@ -27,6 +29,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False 
 CORS(app)
+
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"  # ✅ Stores session in a file
@@ -35,6 +38,10 @@ Session(app)
 # MongoDB Connection
 client = MongoClient("mongodb://localhost:27017/")
 db = client["mental_health_db"]
+
+app.config["MONGO_URI"] = "mongodb://localhost:27017/mental_health_db"
+mongo = PyMongo(app)
+
 
 app.config['DB'] = db
 
@@ -56,7 +63,7 @@ app.register_blueprint(quiz_bp, url_prefix="/quiz")
 app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
 
 app.register_blueprint(selfcare_bp, url_prefix="/selfcare")
-app.register_blueprint(appointments_bp, url_prefix='/appointments')
+# app.register_blueprint(appointments_bp, url_prefix='/appointments')
 #app.register_blueprint(therapists_bp, url_prefix="/")
 
 
@@ -181,11 +188,18 @@ def login():
             session["user"] = user
             session["_id"] = user["_id"]
             session["user_id"] = str(user["_id"])
+
+            # ✅ Set therapist session key if applicable
+            if user.get("role", "").lower() == "therapist" and user.get("verified", False):
+                session["therapist_id"] = str(user["_id"])
+                print("Therapist session set.")
+
             return jsonify({"redirect": url_for("dashboard")}), 200
         else:
             return jsonify({"error": "Invalid credentials. Try again!"}), 400
 
     return render_template("login.html")
+
 
 
     
@@ -343,22 +357,22 @@ def add_quiz():
 #     return render_template("therapist_suggestions.html", therapists=verified_therapists)
 
 
-@app.route('/request_appointment/<therapist_id>', methods=['POST'])
-def request_appointment(therapist_id):
-    patient_id = session.get("user_id")
-    if not patient_id:
-        flash("Please log in first!", "danger")
-        return redirect(url_for("login"))
+# @app.route('/request_appointment/<therapist_id>', methods=['POST'])
+# def request_appointment(therapist_id):
+#     patient_id = session.get("user_id")
+#     if not patient_id:
+#         flash("Please log in first!", "danger")
+#         return redirect(url_for("login"))
 
-    appointment = {
-        "patient_id": patient_id,
-        "therapist_id": therapist_id,
-        "status": "Pending"
-    }
+#     appointment = {
+#         "patient_id": patient_id,
+#         "therapist_id": therapist_id,
+#         "status": "Pending"
+#     }
 
-    db.appointments.insert_one(appointment)
-    flash("Appointment request sent!", "success")
-    return redirect(url_for("therapist_suggestions"))
+#     db.appointments.insert_one(appointment)
+#     flash("Appointment request sent!", "success")
+#     return redirect(url_for("therapist_suggestions"))
 
 
 
@@ -625,9 +639,71 @@ def delete_therapist(therapist_id):
 
 
 
-@app.route("/therapist_dashboard")
+@app.route('/therapist_dashboard')
 def therapist_dashboard():
-    return render_template("therapist_dashboard.html", user=session["user"])
+    therapist_id = session.get('therapist_id')
+
+
+    if not therapist_id:
+        return redirect(url_for('login'))
+
+    appointments = list(mongo.db.appointments.find({
+        "therapist_id": therapist_id,
+        "status": "Pending"
+    }))
+    print(f"Therapist ID in session: {therapist_id}")
+    print(f"Fetched appointments: {appointments}")
+    return render_template('therapist_dashboard.html', requests=appointments)
+
+
+@app.route('/request_appointment/<therapist_id>', methods=['POST'])
+def request_appointment(therapist_id):
+    if 'user_id' not in session:
+        flash("Please log in to request an appointment.", "danger")
+        return redirect(url_for('login'))
+
+    user = mongo.db.users.find_one({"_id": ObjectId(session['user_id'])})
+
+    interest = request.form.get("interest", "").strip()
+    if not interest:
+        flash("Please mention your concern before requesting.", "warning")
+        return redirect(url_for('therapist_suggestions'))
+
+    appointment_data = {
+        "patient_id": str(user["_id"]),
+        "patient_name": user["name"],
+        "patient_email": user["email"],
+        "patient_age": user.get("age", ""),
+        "patient_gender": user.get("gender", ""),
+        "interest": interest,
+        "therapist_id": therapist_id,
+        "status": "Pending",
+        "timestamp": datetime.utcnow()
+    }
+
+    mongo.db.appointments.insert_one(appointment_data)
+    flash("Appointment request sent successfully.", "success")
+    return redirect(url_for('therapist_suggestions'))
+
+
+@app.route('/accept_appointment/<appointment_id>')
+def accept_appointment(appointment_id):
+    mongo.db.appointments.update_one(
+        {"_id": ObjectId(appointment_id)},
+        {"$set": {"status": "Accepted"}}
+    )
+    flash("Appointment accepted.", "success")
+    return redirect(url_for('therapist_dashboard'))
+
+@app.route('/reject_appointment/<appointment_id>')
+def reject_appointment(appointment_id):
+    mongo.db.appointments.update_one(
+        {"_id": ObjectId(appointment_id)},
+        {"$set": {"status": "Rejected"}}
+    )
+    flash("Appointment rejected.", "warning")
+    return redirect(url_for('therapist_dashboard'))
+
 
 @app.route("/caretaker_dashboard")
 def caretaker_dashboard():
@@ -813,6 +889,32 @@ def add_notification():
 def get_notifications():
     notifications = list(notifications_collection.find({}, {"_id": 0}))
     return jsonify(notifications)
+
+@app.route('/therapist_suggestions')
+def therapist_suggestions():
+    if 'user_id' not in session:
+        flash("Please log in to continue.", "warning")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    # Fetch all verified therapists
+    therapists = list(mongo.db.users.find({"role": "Therapist", "verified": True}))
+
+    # Convert ObjectId to string for each therapist
+    for therapist in therapists:
+        therapist['_id'] = str(therapist['_id'])
+
+    # Fetch existing appointment requests made by this user
+    requests = list(mongo.db.appointments.find({"patient_id": user_id}))
+
+    return render_template(
+        "therapist_suggestions.html",
+        therapists=therapists,
+        requests=requests
+    )
+
+
 
 # @app.route("/update_notification", methods=["POST"])
 # def update_notification():
