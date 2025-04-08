@@ -1,53 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Caretaker Dashboard</title>
-    <!-- Bootstrap for beautiful layout -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>Caretaker Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(145deg, #cbe5ff, #e5d6ff);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1000px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 3rem;
+      animation: fadeInUp 0.6s ease;
+    }
+
+    .dashboard-title {
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: #1e3a8a; /* Nice deep blue */
+        text-align: center;
+        margin-bottom: 2rem;
+        letter-spacing: 0.5px;
+        font-family: 'Quicksand', sans-serif;
+    }
+
+
+
+
+    .card-custom {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      padding: 1.8rem;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .card-custom:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .profile-box {
+      background: linear-gradient(to right, #3b82f6, #60a5fa);
+      color: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+      padding: 1.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-box h5 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .profile-box p {
+      margin: 0.2rem 0;
+      font-size: 1rem;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #3b82f6;
+      margin-bottom: 10px;
+    }
+
+    .btn-custom {
+      background-color: #3b82f6;
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      margin-top: 10px;
+      transition: background-color 0.3s ease;
+      width: 100%;
+    }
+
+    .btn-custom:hover {
+      background-color: #2563eb;
+    }
+
+    .alert {
+      text-align: center;
+      font-weight: 500;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 2rem;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="container mt-5">
-    <!-- Title -->
-    <h2 class="text-center mb-4">Welcome, {{ caretaker.name }}</h2>
+  <div class="dashboard-container">
+    <div class="dashboard-title">Welcome, {{ caretaker.name }}</div>
 
     {% if patient %}
-    <!-- Patient Profile Info -->
-    <div class="card shadow p-4 mb-4">
-        <h4>Patient Profile</h4>
-        <p><strong>Name:</strong> {{ patient.name }}</p>
-        <p><strong>Email:</strong> {{ patient.email }}</p>
-        <p><strong>Gender:</strong> {{ patient.gender or "N/A" }}</p>
-        <p><strong>Age:</strong> {{ patient.age or "N/A" }}</p>
+    <!-- Patient Profile -->
+    <div class="profile-box">
+      <h5>👤 Patient Profile</h5>
+      <p><strong>Name:</strong> {{ patient.name }}</p>
+      <p><strong>Email:</strong> {{ patient.email }}</p>
+      <p><strong>Gender:</strong> {{ patient.gender or "N/A" }}</p>
+      <p><strong>Age:</strong> {{ patient.age or "N/A" }}</p>
     </div>
 
-    <!-- Two cards for redirection -->
-    <div class="row">
-        <!-- Self-Care Button -->
-        <div class="col-md-6">
-            <div class="card shadow p-4 mb-4">
-                <h5>🧘 Self-Care Suggestions</h5>
-                <p>View the patient's self-care routines and activities.</p>
-                <a href="{{ url_for('selfcare_suggestions', patient_email=patient.email) }}" class="btn btn-info w-100">Go to Self-Care</a>
-            </div>
+    <!-- Options -->
+    <div class="row g-4">
+      <!-- Self-Care Suggestions -->
+      <div class="col-md-6">
+        <div class="card-custom text-center h-100">
+          <h5 class="card-title">🧘 Self-Care Suggestions</h5>
+          <p>Explore the patient's routines and mental wellness tips.</p>
+          <a href="{{ url_for('selfcare_suggestions', patient_email=patient.email) }}" class="btn btn-custom">
+            Go to Self-Care
+          </a>
         </div>
+      </div>
 
-        <!-- Therapist Suggestions Button -->
-        <div class="col-md-6">
-            <div class="card shadow p-4 mb-4">
-                <h5>👩‍⚕️ Therapist Suggestions</h5>
-                <p>View and track therapist recommendations and appointments.</p>
-                <a href="{{ url_for('caretaker_therapist_suggestions', patient_email=patient.email) }}" class="btn btn-primary w-100">
-                    Go to Therapist Suggestions
-                </a>
-                
-
-            </div>
+      <!-- Therapist Suggestions -->
+      <div class="col-md-6">
+        <div class="card-custom text-center h-100">
+          <h5 class="card-title">👩‍⚕️ Therapist Suggestions</h5>
+          <p>View and manage therapist recommendations and appointments.</p>
+          <a href="{{ url_for('caretaker_therapist_suggestions', patient_email=patient.email) }}" class="btn btn-custom">
+            Go to Therapist Suggestions
+          </a>
         </div>
+      </div>
     </div>
+
     {% else %}
-    <div class="alert alert-warning">No patient linked to this caretaker account.</div>
+    <div class="alert alert-warning mt-4">
+      No patient linked to this caretaker account.
+    </div>
     {% endif %}
-</div>
+  </div>
 </body>
 </html>
